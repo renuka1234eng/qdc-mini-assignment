@@ -14,20 +14,33 @@ export interface Order {
   garments: Garment[];
 }
 
+type StatusFilter =
+  | 'all'
+  | 'received'
+  | 'in_cleaning'
+  | 'ready'
+  | 'delivered';
+
 export const App: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedStatus, setSelectedStatus] =
+    useState<StatusFilter>('all');
+
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
       setError(null);
+
       try {
         const res = await fetch('http://localhost:3001/api/orders');
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
+
         const data = (await res.json()) as Order[];
         setOrders(data);
       } catch (e: any) {
@@ -43,10 +56,43 @@ export const App: React.FC = () => {
   return (
     <div style={{ padding: '1rem', fontFamily: 'sans-serif' }}>
       <h1>QDC Mini Dashboard</h1>
+
       <p>Simple view of active orders and garments.</p>
+
+      <div style={{ marginBottom: '1rem' }}>
+        <label>
+          Filter by Status:{' '}
+          <select
+            value={selectedStatus}
+            onChange={(e) =>
+              setSelectedStatus(
+                e.target.value as StatusFilter
+              )
+            }
+          >
+            <option value="all">All</option>
+            <option value="received">Received</option>
+            <option value="in_cleaning">In Cleaning</option>
+            <option value="ready">Ready</option>
+            <option value="delivered">Delivered</option>
+          </select>
+        </label>
+      </div>
+
       {loading && <p>Loading orders...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {!loading && !error && <OrdersList orders={orders} />}
+
+      {error && (
+        <p style={{ color: 'red' }}>
+          Error: {error}
+        </p>
+      )}
+
+      {!loading && !error && (
+        <OrdersList
+          orders={orders}
+          selectedStatus={selectedStatus}
+        />
+      )}
     </div>
   );
 };

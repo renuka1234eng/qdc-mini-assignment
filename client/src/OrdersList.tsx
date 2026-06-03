@@ -3,6 +3,12 @@ import type { Order } from './App';
 
 interface Props {
   orders: Order[];
+  selectedStatus:
+    | 'all'
+    | 'received'
+    | 'in_cleaning'
+    | 'ready'
+    | 'delivered';
 }
 
 const statusLabel: Record<string, string> = {
@@ -12,14 +18,38 @@ const statusLabel: Record<string, string> = {
   delivered: 'Delivered',
 };
 
-export const OrdersList: React.FC<Props> = ({ orders }) => {
-  if (orders.length === 0) {
-    return <p>No active orders.</p>;
+export const OrdersList: React.FC<Props> = ({
+  orders,
+  selectedStatus,
+}) => {
+  const filteredOrders = orders
+    .map((order) => ({
+      ...order,
+      garments: order.garments.filter(
+        (g) =>
+          selectedStatus === 'all' ||
+          g.status === selectedStatus
+      ),
+    }))
+    .filter((order) => order.garments.length > 0);
+
+  if (filteredOrders.length === 0) {
+    return (
+      <p>
+        No garments match the selected status.
+      </p>
+    );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      {orders.map((order) => (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+      }}
+    >
+      {filteredOrders.map((order) => (
         <div
           key={order.id}
           style={{
@@ -28,15 +58,31 @@ export const OrdersList: React.FC<Props> = ({ orders }) => {
             padding: '0.75rem',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
             <strong>{order.id}</strong>
             <span>{order.customerName}</span>
           </div>
-          <small>Created: {new Date(order.createdAt).toLocaleString()}</small>
+
+          <small>
+            Created:{' '}
+            {new Date(
+              order.createdAt
+            ).toLocaleString()}
+          </small>
+
           <ul>
             {order.garments.map((g) => (
               <li key={g.id}>
-                {g.description} - <em>{statusLabel[g.status] ?? g.status}</em>
+                {g.description} -{' '}
+                <em>
+                  {statusLabel[g.status] ??
+                    g.status}
+                </em>
               </li>
             ))}
           </ul>
